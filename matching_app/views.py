@@ -1,3 +1,5 @@
+from random import choice
+
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
@@ -57,3 +59,44 @@ class MatchingJoinAPIView(APIView):
         response = self.response_serializer(matching)
 
         return Response(response.data, status=status.HTTP_200_OK)
+
+
+class MatchingLeaveAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request: Request, matching_id: int):
+        matching = get_object_or_404(Matching, id=matching_id)
+
+        if request.user not in matching.joined_members.all():
+            body = {'message': '해당 모임에 참여한 기록이 없습니다.'}
+            return Response(body, status=status.HTTP_400_BAD_REQUEST)
+        elif timezone.now() > matching.starts_at:
+            body = {'message': '이미 시작되었거나 끝난 모임에서 나올 수 없습니다.'}
+            return Response(body, status=status.HTTP_400_BAD_REQUEST)
+
+        # 호스트인 경우
+        if request.user == matching.host:
+            # 호스트인데 나만 있는 경우 모임 삭제
+            if matching.joined_members.count() == 1:
+                matching.delete()
+            # 호스트인데 나 말고 다른 사람이 있는 경우
+            else:
+                # 일단 호스트는 빠지고
+                matching.joined_members.all(id=request.user.id).delete()
+                # 나머지 중에서 새 호스트를 랜덤하게 찾음
+                new_host = choice(matching.joined_members.all())
+                matching.host = new_host
+                matching.save()
+
+        # 호스트가 아닌 경우
+        else:
+            # 일단 나는 빠지고
+            matching.joined_members.filter(id=request.user.id).delete()
+            # 남은 멤버가 없으면 모임 삭제
+            if not matching.joined_members.exists():
+                matching.delete()
+            # 남은 멤버가 없으면 변경 내역 반영
+            else:
+                matching.save()
+
+        return Response(status=status.HTTP_200_OK)
