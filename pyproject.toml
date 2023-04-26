@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "babyak-be"
+version = "0.1.0"
+description = ""
+authors = ["pcjs156 <itqkrdbqls1001@naver.com>"]
+readme = "README.md"
+packages = [{include = "babyak_be"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^4.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
