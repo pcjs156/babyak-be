@@ -11,3 +11,4 @@ class Matching(models.Model):
     description = models.TextField(blank=True, default='', verbose_name='추가 정보')
     people_limit = models.PositiveIntegerField(null=True, blank=True, verbose_name='최대 인원')
     joined_members = models.ManyToManyField('user_app.User', related_name='joined_matchings', verbose_name='참여 유저')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성 일시')
