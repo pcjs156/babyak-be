@@ -6,5 +6,5 @@ from user_app.views import LoginAPIView
 app_name = 'users'
 
 urlpatterns = [
-    path('login', LoginAPIView.as_view(), name='login'),
+    path('/login', LoginAPIView.as_view(), name='login'),
 ]
