@@ -70,10 +70,6 @@ class JoinedMatchingListAPIView(JoinedMatchingListMixin, GenericAPIView):
 
     def get(self, request: Request, *args, **kwargs):
         resp = self.list(request, *args, **kwargs)
-
-        name = request.user.name
-        resp.data = list(filter(lambda x: name in x['joined_members'], resp.data))
-
         return resp
 
 
