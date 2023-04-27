@@ -38,7 +38,7 @@ class JoinedMatchingListMixin(MatchingListMixin):
         resp = super().list(request, *args, **kwargs)
 
         user = request.user
-        resp.data = list(filter(lambda x: user.id in x['joined_members'], resp.data))
+        resp.data = list(filter(lambda x: user.name in x['joined_members'], resp.data))
 
         return resp
 
