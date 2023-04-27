@@ -2,12 +2,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.db.utils import IntegrityError
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import RetrieveAPIView
 
-from .serializers import LoginSerializer, RegistrationSerializer
+from .models import User
+from .serializers import LoginSerializer, RegistrationSerializer, UserSerializer
 
 
 class LoginAPIView(APIView):
@@ -59,3 +61,18 @@ class LogoutAPIView(APIView):
     def post(self, request: Request):
         logout(request)
         return Response(status=status.HTTP_200_OK)
+
+
+class UserRetrieveAPIView(RetrieveAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = UserSerializer
+
+
+class RetrieveMeAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    def get(self, request):
+        serializer = self.serializer_class(request.user)
+        return Response(data=serializer.data)
