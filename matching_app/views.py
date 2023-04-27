@@ -19,7 +19,7 @@ class MatchingListMixin(ListModelMixin):
     def list(self, request, *args, **kwargs):
         resp = super().list(request, *args, **kwargs)
 
-        order_by = request.query_params.get('order-by', 'join_deadline')
+        order_by = request.query_params.get('order-by', 'starts_at')
         order_direction = request.query_params.get('order-direction', 'desc')
 
         resp.data = sorted(resp.data, key=lambda x: x[order_by], reverse=order_direction.lower() == 'desc')
@@ -93,7 +93,7 @@ class MatchingJoinAPIView(APIView):
         elif request.user in matching.joined_members.all():
             body = {'code': 2, 'message': '이미 모임에 소속되어 있습니다.'}
             return Response(body, status=status.HTTP_409_CONFLICT)
-        elif timezone.now() > matching.join_deadline or \
+        elif timezone.now() > matching.starts_at or \
                 matching.people_limit is not None and matching.people_limit <= matching.joined_members.count():
             body = {'message': '마감된 모임입니다.'}
             return Response(body, status=status.HTTP_400_BAD_REQUEST)
