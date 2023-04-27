@@ -69,7 +69,12 @@ class JoinedMatchingListAPIView(JoinedMatchingListMixin, GenericAPIView):
     serializer_class = MatchingSerializer
 
     def get(self, request: Request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        resp = self.list(request, *args, **kwargs)
+
+        name = request.user.name
+        resp.data = list(filter(lambda x: name in x['joined_members'], resp.data))
+
+        return resp
 
 
 class MatchingRetrieveDeleteAPIView(RetrieveDestroyAPIView):
