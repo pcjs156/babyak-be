@@ -19,8 +19,14 @@ class MatchingListMixin(ListModelMixin):
     def list(self, request, *args, **kwargs):
         resp = super().list(request, *args, **kwargs)
 
+        # 필터링 처리
+        status = request.query_params.get('status', '모집 완료')
+        status = set(map(str.strip, status.split(',')))
+        resp.data = list(filter(lambda x: x['status'] in status, resp.data))
+
+        # 정렬 처리
         order_by = request.query_params.get('order-by', 'starts_at')
-        order_direction = request.query_params.get('order-direction', 'desc')
+        order_direction = request.query_params.get('order-direction', 'asc')
 
         resp.data = sorted(resp.data, key=lambda x: x[order_by], reverse=order_direction.lower() == 'desc')
 
