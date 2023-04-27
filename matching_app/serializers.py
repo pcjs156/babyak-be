@@ -7,6 +7,8 @@ from .models import Matching
 
 class MatchingSerializer(serializers.ModelSerializer):
     status = serializers.CharField(read_only=True)
+    host = serializers.SlugRelatedField(many=False, read_only=True, slug_field='username')
+    joined_members = serializers.SlugRelatedField(many=True, read_only=True, slug_field='username')
 
     class Meta:
         model = Matching

@@ -77,6 +77,10 @@ class MatchingRetrieveDeleteAPIView(RetrieveDestroyAPIView):
     queryset = Matching.objects.all()
     serializer_class = MatchingSerializer
 
+    def get_serializer_context(self):
+        ret = super().get_serializer_context()
+        return ret
+
     def destroy(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             raise NotAuthenticated
