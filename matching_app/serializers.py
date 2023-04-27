@@ -48,7 +48,7 @@ class MatchingSerializer(serializers.ModelSerializer):
             # 인원 상한이 있으면
             elif people_limit is not None:
                 # 인원 상한을 넘기지 않은 경우 모집중
-                if people_limit < len(joined_members):
+                if people_limit > len(joined_members):
                     rep['status'] = '모집중'
                 # 인원 상한을 넘긴 경우 모집 완료
                 else:
