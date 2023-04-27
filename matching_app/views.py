@@ -8,8 +8,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.generics import ListCreateAPIView
-from rest_framework.exceptions import NotAuthenticated
+from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
+from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 
 from matching_app.serializers import MatchingSerializer
 
@@ -37,6 +37,18 @@ class MatchingListCreateAPIView(ListCreateAPIView):
         else:
             return super().create(request, *args, **kwargs)
 
+class MatchingRetrieveDeleteAPIView(RetrieveDestroyAPIView):
+    permission_classes = (AllowAny,)
+    queryset = Matching.objects.all()
+    serializer_class = MatchingSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise NotAuthenticated
+        elif not Matching.objects.filter(id=kwargs['pk'], host=request.user).exists():
+            raise PermissionDenied
+        else:
+            return super().destroy(request, *args, **kwargs)
 
 class MatchingJoinAPIView(APIView):
     permission_classes = (IsAuthenticated,)
