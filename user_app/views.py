@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 
 from rest_framework import status
 from rest_framework.request import Request
@@ -40,3 +40,14 @@ class RegistrationAPIView(APIView):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+class LogoutAPIView(APIView):
+    permission_classes = (AllowAny,)
+    #serializer_class = LogoutSerializer
+    def get(self, request):
+        logout(request)
+        return Response(status=status.HTTP_200_OK)
+    def post(self, request: Request):
+        logout(request)
+        return Response(status=status.HTTP_200_OK)
