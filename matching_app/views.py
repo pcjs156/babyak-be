@@ -1,26 +1,21 @@
 from random import choice
 
-from django.utils import timezone
 from django.shortcuts import get_object_or_404
-
+from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+from rest_framework.generics import RetrieveDestroyAPIView, GenericAPIView
+from rest_framework.mixins import ListModelMixin, CreateModelMixin
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
-from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 
 from matching_app.serializers import MatchingSerializer
-
 from .models import Matching
 
 
-class MatchingListCreateAPIView(ListCreateAPIView):
-    permission_classes = (AllowAny,)
-    queryset = Matching.objects.all()
-    serializer_class = MatchingSerializer
-
+class MatchingListMixin(ListModelMixin):
     def list(self, request, *args, **kwargs):
         resp = super().list(request, *args, **kwargs)
 
@@ -31,11 +26,45 @@ class MatchingListCreateAPIView(ListCreateAPIView):
 
         return resp
 
+
+class JoinedMatchingListMixin(MatchingListMixin):
+    def list(self, request, *args, **kwargs):
+        resp = super().list(request, *args, **kwargs)
+
+        user = request.user
+        resp.data = list(filter(lambda x: user.id in x['joined_members'], resp.data))
+
+        return resp
+
+
+class MatchingCreateMixin(CreateModelMixin):
     def create(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             raise NotAuthenticated
         else:
             return super().create(request, *args, **kwargs)
+
+
+class MatchingListCreateAPIView(MatchingListMixin, MatchingCreateMixin, GenericAPIView):
+    permission_classes = (AllowAny,)
+    queryset = Matching.objects.all()
+    serializer_class = MatchingSerializer
+
+    def get(self, request: Request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request: Request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class JoinedMatchingListAPIView(JoinedMatchingListMixin, GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    queryset = Matching.objects.all()
+    serializer_class = MatchingSerializer
+
+    def get(self, request: Request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
 
 class MatchingRetrieveDeleteAPIView(RetrieveDestroyAPIView):
     permission_classes = (AllowAny,)
@@ -49,6 +78,7 @@ class MatchingRetrieveDeleteAPIView(RetrieveDestroyAPIView):
             raise PermissionDenied
         else:
             return super().destroy(request, *args, **kwargs)
+
 
 class MatchingJoinAPIView(APIView):
     permission_classes = (IsAuthenticated,)

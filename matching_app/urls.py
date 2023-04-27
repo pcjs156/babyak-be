@@ -9,4 +9,5 @@ urlpatterns = [
     path('<int:pk>', views.MatchingRetrieveDeleteAPIView.as_view(), name='retrieve-delete'),
     path('<int:matching_id>/join', views.MatchingJoinAPIView.as_view(), name='join'),
     path('<int:matching_id>/leave', views.MatchingLeaveAPIView.as_view(), name='leave'),
+    path('me', views.JoinedMatchingListAPIView.as_view(), name='my-list'),
 ]
