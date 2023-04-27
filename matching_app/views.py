@@ -7,32 +7,35 @@ from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.generics import ListCreateAPIView
+from rest_framework.exceptions import NotAuthenticated
 
-from matching_app.serializers import MatchingCreateSerializer, MatchingSerializer
+from matching_app.serializers import MatchingSerializer
 
 from .models import Matching
 
 
-class MatchingCreateAPIView(APIView):
-    permission_classes = (IsAuthenticated,)
-    request_serializer = MatchingCreateSerializer
-    response_serializer = MatchingSerializer
+class MatchingListCreateAPIView(ListCreateAPIView):
+    permission_classes = (AllowAny,)
+    queryset = Matching.objects.all()
+    serializer_class = MatchingSerializer
 
-    def post(self, request: Request):
-        serializer = self.request_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def list(self, request, *args, **kwargs):
+        resp = super().list(request, *args, **kwargs)
 
-        data = serializer.validated_data
-        data['host'] = request.user
+        order_by = request.query_params.get('order-by', 'join_deadline')
+        order_direction = request.query_params.get('order-direction', 'desc')
 
-        matching = Matching.objects.create(**data)
-        matching.joined_members.add(request.user)
-        matching.save()
+        resp.data = sorted(resp.data, key=lambda x: x[order_by], reverse=order_direction.lower() == 'desc')
 
-        response = self.response_serializer(matching)
+        return resp
 
-        return Response(response.data, status=status.HTTP_201_CREATED)
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise NotAuthenticated
+        else:
+            return super().create(request, *args, **kwargs)
 
 
 class MatchingJoinAPIView(APIView):

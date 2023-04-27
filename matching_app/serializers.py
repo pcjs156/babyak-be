@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -5,9 +6,52 @@ from .models import Matching
 
 
 class MatchingSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(read_only=True)
+
     class Meta:
         model = Matching
         fields = '__all__'
+        read_only_fields = ['host', 'joined_members']
+
+    def create(self, validated_data):
+        requested_user = self.context.get('request').user
+
+        # 요청자를 호스트로 설정
+        matching = Matching(**validated_data)
+        matching.host = requested_user
+        matching.save()
+
+        # 요청자를 멤버로 추가
+        matching.joined_members.add(requested_user)
+        matching.save()
+
+        return matching
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+
+        now = timezone.now()
+        join_deadline = timezone.datetime.strptime(rep.get('join_deadline'), '%Y-%m-%dT%H:%M:%S')
+
+        people_limit = rep.get('people_limit')
+        joined_members = rep.get('joined_members')
+
+        # 모집 기한을 넘기지 않은 경우
+        if now < join_deadline:
+            # 인원 상한이 없는 경우
+            if people_limit is None:
+                rep['status'] = '모집중'
+            # 인원 상한이 있는 경우
+            else:
+                # 인원 상한에 아직 도달하지 않은 경우
+                if people_limit < len(joined_members):
+                    rep['status'] = '모집중'
+                else:
+                    rep['status'] = '모집 완료'
+        else:
+            rep['status'] = '모집 완료'
+
+        return rep
 
 
 class MatchingCreateSerializer(serializers.Serializer):
