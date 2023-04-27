@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.db.utils import IntegrityError
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -70,6 +71,7 @@ class UserRetrieveAPIView(RetrieveAPIView):
 
 
 class RetrieveMeAPIView(APIView):
+    authentication_classes = [SessionAuthentication]
     permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
 
